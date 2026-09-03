@@ -1,0 +1,54 @@
+/*
+* uncg-instructure.css
+* version 1.7.4 (08/08/2017)
+*/
+
+/* --- hide the "Click here to tell us what you're looking for" dialog when user encounters a Page Not Found (submits ticket to ZenDesk) --- */
+a.submit_error_link { display: none; }
+
+/* --- form overrides for length of element --- */
+/* these are not styled inline (like ones below) */
+#course_time_zone {width: 75%;}
+/* these are all styled inline for some unknown reason... so !important is necessary, sadly */
+#course_sis_source_id, #course_course_code, #course_name {width: 75% !important;}
+
+/* --- grading scheme overrides --- */
+/* window should be taller to avoid scroll-in-scroll */
+/* more inline styles from Canvas - need to use !important */
+#edit_letter_grades_form {
+	height: auto !important;
+	max-height: 700px !important;
+}
+
+/* container divs for both displaying and editing */
+.display_grading_standard .data_holder,
+.grading_standard.editing .data_holder {
+	max-height: none;
+}
+
+/* components */
+table.side_tabs_table div.side_tabs_content,
+table.side_tabs_table ul.side_tabs {
+	max-height: none;
+}
+
+/* --- course list overrides --- */
+#courses_list .courses ul {
+	/* max-height rule fixes rendering bug */
+	max-height: initial !important;
+	overflow: visible !important;
+}
+
+/* --- SpeedGrader quiz points box override --- */
+#update_history_form .header .question_input {
+  width: 60px;
+}
+
+/*Module header font size */
+.ig-header .name {
+    color: #3d454c;
+    /* font-size: 20px;*/
+    font-size: 1.25rem; 
+    text-shadow:1px 1px 0 rgba(255,255,255,.5);
+    font-weight: bold
+}

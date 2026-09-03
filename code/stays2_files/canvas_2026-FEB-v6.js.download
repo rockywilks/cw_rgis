@@ -1,0 +1,267 @@
+/*
+ * uncg-instructure.js
+ * version 2.0 (02/19/2026)
+ */
+
+$(document).ready(function () {
+
+    // Replace "email addresses" with "UNCG usernames" in [ + People ]
+    var form = "form[data-view='createUsers']";
+    $(document).on("click", "#addUsers", function () {
+        $(form + " p").html("Type or paste a list of UNCG usernames below, separated by commas.<br><em>Note: only UNCG users may be added.</em>");
+        $(form + " #user_list_textarea")
+            .attr("placeholder", "Enter UNCG usernames here, separated by commas")
+            .attr("aria-label", "Enter UNCG usernames here, separated by commas");
+    });
+
+    // Add Starfish to Profile area
+    var userId = ENV.current_user_id;
+    var urlChunks = window.location.href.split("/");
+    var domain = urlChunks[2];
+    var icon = "icon-star";
+    var linkId = "starfish";
+    var linkhref = "https://starfish.uncg.edu";
+    var iconHtml = "<i class=" + icon + " style=\"color:white;\"></i> ";
+    var linkText = "Starfish";
+
+    // Add "(Legacy)" label to ePortfolios and Folio links
+    function addLegacyLabels() {
+        $("#nav-tray-portal a, #section-tabs a").each(function () {
+            var anchor = $(this);
+            var text = anchor.text().trim();
+            if (text === 'ePortfolios' || text === 'Folio') {
+                // Try to find a child span first, otherwise update the anchor directly
+                var textSpan = anchor.find('span').last();
+                if (textSpan.length > 0) {
+                    if (!textSpan.text().includes('(Legacy)')) {
+                        textSpan.text(textSpan.text().trim() + ' (Legacy)');
+                    }
+                } else {
+                    if (!anchor.html().includes('(Legacy)')) {
+                        anchor.html(anchor.html().trim() + ' (Legacy)');
+                    }
+                }
+            }
+        });
+    }
+
+    // DRY method to add a Starfish link after the ePortfolios link, wherever it appears
+    function addStarfishLinkAfterEportfolios(targetElementToClone, locationOfReplacementForTracking) {
+        if (targetElementToClone.length > 0) {
+            // Check if Starfish link already exists to prevent duplicates
+            var parent = targetElementToClone.parent();
+            if (parent.find('a[href*="starfish.uncg.edu"]').length > 0) {
+                return;
+            }
+
+            var newElement = targetElementToClone.clone();
+
+            // Find and update the anchor tag
+            var anchor = newElement.find('a');
+            if (anchor.length > 0) {
+                anchor.attr('href', linkhref);
+                anchor.attr('target', '_blank');
+                anchor.attr('onclick', "trackOutboundLink('" + linkhref + "', '" + locationOfReplacementForTracking + "'); return false;");
+
+                // Update the text content - find the span with the link text
+                var textSpan = anchor.find('span.menu-item__text');
+                if (textSpan.length > 0) {
+                    textSpan.text('Starfish');
+                } else {
+                    // Fallback: replace any text that says ePortfolios
+                    var anchorHtml = anchor.html();
+                    anchorHtml = anchorHtml.replace(/ePortfolios(\s*\(Legacy\))?/gi, 'Starfish');
+                    anchor.html(anchorHtml);
+                }
+            }
+
+            newElement.appendTo(parent);
+        }
+    }
+
+    // Add Starfish link in flyout menu after Profile is clicked
+    $(document).on('click', "#global_nav_profile_link", function () {
+        setTimeout(function () {
+            addLegacyLabels();
+            addStarfishLinkAfterEportfolios(
+                $("#nav-tray-portal a[href='/dashboard/eportfolios']").parent(),
+                'profileMenuFlyoutMenu'
+            );
+        }, 400);
+
+        // Run again slightly later in case the tray takes longer to render
+        setTimeout(addLegacyLabels, 800);
+    });
+
+    // Add Starfish in all user submenu areas after page load
+    addLegacyLabels();
+    addStarfishLinkAfterEportfolios(
+        $("#section-tabs a[href='/dashboard/eportfolios']").parent(),
+        'profileMenuStaticMenu'
+    );
+
+    // Alter NEW [ + People ] area
+    var htmlTitle = $("title").html();
+    if (htmlTitle.indexOf('Course Roster: ') != -1) {
+        var radios = {};
+        radios.email = "peoplesearch_radio_cc_path";
+        radios.username = "peoplesearch_radio_unique_id";
+        radios.sis_id = "peoplesearch_radio_sis_user_id";
+
+        var buttonsToRemove = ["email", "sis_id"];
+        var selectedButton = "username";
+
+        function uncgEditLoginOptions() {
+            // Update the radio button label text to "UNCG Username"
+            $span = $("#peoplesearch_radio_unique_id").next().children()[1];
+            if ($span !== undefined) {
+                $span.innerHTML = "UNCG Username";
+            }
+
+            // Update the instructions text in multiple locations
+            $span2 = $(".peoplesearch__instructions").children('span').children()[0];
+            if ($span2 !== undefined) {
+                $span2.innerHTML = "Add users by UNCG Username.<br><i>Note: only UNCG users may be added.</i>";
+            }
+
+            // Also update any other instruction areas
+            $(".peoplesearch__instructions span").html("Add users by UNCG Username.<br><i>Note: only UNCG users may be added.</i>");
+            
+            // Update the general instructions paragraph if it exists
+            $(".peoplesearch__instructions").html("<span>Add users by UNCG Username.<br><i>Note: only UNCG users may be added.</i></span>");
+
+            // Click the label to trigger Canvas's internal handlers
+            var usernameLabel = $("label[for='" + radios[selectedButton] + "']");
+            if (usernameLabel.length > 0) {
+                usernameLabel.trigger('click');
+            } else {
+                // Fallback: Set the radio button directly
+                var usernameRadio = document.getElementById(radios[selectedButton]);
+                if (usernameRadio) {
+                    usernameRadio.checked = true;
+                    
+                    // Trigger multiple events
+                    $(usernameRadio).trigger('click').trigger('change');
+                    
+                    var event = new Event('change', { bubbles: true });
+                    usernameRadio.dispatchEvent(event);
+                }
+            }
+
+            // Hide the other radio button options
+            for (var x = 0; x < buttonsToRemove.length; x++) {
+                var forValue = radios[buttonsToRemove[x]];
+                $("label[for='" + forValue + "']").hide();
+            }
+
+            // Change the "Email Addresses *" label text to "UNCG Usernames" instead of hiding
+            $("label").each(function() {
+                var labelText = $(this).text().trim();
+                if (labelText === "Email Addresses *" || labelText === "Email Addresses") {
+                    $(this).text("UNCG Usernames");
+                }
+            });
+        }
+
+        // Monitor for text changes and force it back to "UNCG Username"
+        function enforceUNCGUsernameLabel() {
+            var $label = $("#peoplesearch_radio_unique_id").next().find('span:last');
+            if ($label.length > 0) {
+                var currentText = $label.text().trim();
+                // If it says anything other than "UNCG Username", fix it
+                if (currentText !== "UNCG Username" && currentText !== "") {
+                    $label.text("UNCG Username");
+                }
+            }
+
+            // Ensure the radio button stays selected
+            var usernameRadio = document.getElementById(radios[selectedButton]);
+            if (usernameRadio && !usernameRadio.checked) {
+                // Click the label instead of just setting checked
+                var usernameLabel = $("label[for='" + radios[selectedButton] + "']");
+                if (usernameLabel.length > 0) {
+                    usernameLabel.trigger('click');
+                } else {
+                    usernameRadio.checked = true;
+                    $(usernameRadio).trigger('change').trigger('click');
+                }
+            }
+
+            // Keep the instructions updated
+            var $instructions = $(".peoplesearch__instructions");
+            if ($instructions.length > 0) {
+                var currentInstructions = $instructions.text().trim();
+                if (!currentInstructions.includes("Add users by UNCG Username")) {
+                    $instructions.html("<span>Add users by UNCG Username.<br><i>Note: only UNCG users may be added.</i></span>");
+                }
+            }
+
+            // Keep changing the "Email Addresses *" label text to "UNCG Usernames"
+            $("label").each(function() {
+                var labelText = $(this).text().trim();
+                if (labelText === "Email Addresses *" || labelText === "Email Addresses") {
+                    $(this).text("UNCG Usernames");
+                }
+            });
+        }
+
+        $(document).on('click', "#addUsers", function () {
+            setTimeout(uncgEditLoginOptions, 300);
+            // Set up periodic checking to maintain label and selection
+            setTimeout(function() {
+                var checkInterval = setInterval(enforceUNCGUsernameLabel, 100);
+                // Stop checking after 10 seconds
+                setTimeout(function () {
+                    clearInterval(checkInterval);
+                }, 10000);
+            }, 300);
+        });
+
+        $(document).on('click', "#addpeople_back", function () {
+            setTimeout(uncgEditLoginOptions, 300);
+            // Set up periodic checking to maintain label and selection
+            setTimeout(function() {
+                var checkInterval = setInterval(enforceUNCGUsernameLabel, 100);
+                setTimeout(function () {
+                    clearInterval(checkInterval);
+                }, 10000);
+            }, 300);
+        });
+
+        // Maintain radio selection and label when user interacts with the search field
+        $(document).on('input keyup change focus', "input[name='peoplesearch[search_term]']", function () {
+            enforceUNCGUsernameLabel();
+        });
+
+        // Also monitor when the radio buttons are clicked to restore our label
+        $(document).on('click change', "input[type='radio'][name='peoplesearch[search_type]']", function () {
+            setTimeout(enforceUNCGUsernameLabel, 10);
+        });
+    }
+
+    // Panorama integration
+(async function() {
+    const PANORAMA_SERVER_URL = 'https://panorama-api.yuja.com';
+    const panoramaIdentifierKey = '59063d1107793dad53301ebe4c666b33d2d91d3a19574edd0deb7ff8ec21832d';
+    const PANORAMA_CDN_URL = 'https://cdn-panorama.yuja.com';
+
+    window.PANORAMA_SERVER_URL = PANORAMA_SERVER_URL;
+    window.panoramaIdentifierKey = panoramaIdentifierKey;
+    window.PANORAMA_CDN_URL = PANORAMA_CDN_URL;
+
+    function loadScript(url) {
+        const script = document.createElement('script');
+        script.src = url;
+        document.head.appendChild(script);
+    }
+
+    try {
+        const response = await fetch(`${PANORAMA_SERVER_URL}/panorama-visualizer/canvas`, {cache: 'no-store'});
+        const scriptUrl = await response.text();
+        loadScript(scriptUrl);
+    } catch (e) {
+        console.error('Failed to load Panorama: ', e);
+    }
+})();
+
+});

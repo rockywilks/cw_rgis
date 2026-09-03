@@ -19,10 +19,9 @@ mb <- rbind(vc, vd)
 # x <- cbind(vc,vd)
 
 ## tricky data type: factor
-vz <- c("a","b,"c")
+vz <- c("a","b","c")
 vf <- factor(vz)
 
 ## data frame
-df0 <- dta.frame(letter = vz,numeric = va)
+df0 
 
-df0
