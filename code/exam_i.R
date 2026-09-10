@@ -20,7 +20,7 @@ mtcars_cy16 <- df_mtcars %>%
 # Use `%in%` to filter the `df_mtcars` dataset for these two `gear` values.
 # Assign to: `mtcars_g35`
 mtcars_g35 <- df_mtcars %>% 
-  filter(gear == 3)
+  filter(gear %in% c(3 , 5))
 
 
 
