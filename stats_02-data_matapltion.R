@@ -11,9 +11,9 @@ library(tidyverse)
  
  print(iris_sub)
  
-filter(iris_sub, Species == "virginica")
-filter(iris_sub, Species %in% c("virginica")
-filter(iris_sub, Species !=("setosa")
+filter(iris_sub, Species = ("virginica")
+filter(iris_sub, Species = c("virginica")
+filter(iris_sub, Species =("setosa")
 
 filter(iris_sub, petal.Length > 5,  Sepal.Length > 5)
 
