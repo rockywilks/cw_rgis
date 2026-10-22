@@ -68,6 +68,6 @@ sf_county_s1_area <- sf_county_s1 %>%
   mutate(area_m2 = as.numeric(st_area(geometry)))
 
 sf_county_s1_area %>%
-  arrange(desc(area_m2)) %>%
+  arrange(desc(area_m2)) %>%  
   select(county, area_m2) %>%
   slice(1)
